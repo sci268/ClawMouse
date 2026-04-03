@@ -1034,6 +1034,47 @@ def trae_send_message(
 
 
 @mcp.tool
+def trae_solo_send_message(
+    text: str,
+    hwnd: Optional[int] = None,
+    title_substring: Optional[str] = None,
+    exact_title: Optional[str] = None,
+    input_offset_x: Optional[int] = None,
+    input_offset_y: Optional[int] = None,
+    submit_mode: Optional[str] = None,
+    visible_only: bool = True,
+    focus: Optional[bool] = None,
+    restore: bool = True,
+    hold_ms: int = 50,
+    input_ready_delay_ms: int = 100,
+    click_delay_ms: int = 0,
+    enter_delay_ms: Optional[int] = None,
+    enter_times: Optional[int] = None,
+    click_before_enter: Optional[bool] = None,
+    click_before_enter_delay_ms: Optional[int] = None,
+) -> Dict[str, Any]:
+    return controller.trae_solo_send_message(
+        text,
+        hwnd,
+        title_substring,
+        exact_title,
+        input_offset_x,
+        input_offset_y,
+        submit_mode,
+        visible_only,
+        focus,
+        restore,
+        hold_ms,
+        input_ready_delay_ms,
+        click_delay_ms,
+        enter_delay_ms,
+        enter_times,
+        click_before_enter,
+        click_before_enter_delay_ms,
+    )
+
+
+@mcp.tool
 def wechat_send_message(
     text: str,
     hwnd: Optional[int] = None,

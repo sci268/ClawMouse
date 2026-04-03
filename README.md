@@ -21,6 +21,12 @@
 
 ClawMouse 是一个面向桌面自动化的 Python 项目，既能作为传统“录制 / 回放”宏工具使用，也能作为一个可被 AI 代理调用的 MCP 自动化服务使用。
 
+一句话理解：
+
+- 想自动执行一段桌面操作，用它录制和回放
+- 想让 AI 操作桌面窗口、聊天框和截图，用它启动 MCP
+- 想让 Trae / Lobster 继续处理任务，用它跑 bridge 工作流
+
 如果你准备在 Windows 上长期维护并公开发布这个仓库，建议把项目根目录固定为：
 
 ```text
@@ -39,11 +45,33 @@ C:\ClawMouse
 - MCP 桌面操作、窗口操作、截图和聊天发送
 - 面向 Trae / Lobster / OpenClaw 风格工作流的桥接与委托
 
+## 快速入口
+
+- 想直接上手桌面录制：看“快速开始”
+- 想先理解项目分层：看 `docs/PROJECT_MAP.md`
+- 想发布 exe 给别人用：看 `docs/WINDOWS_RELEASE.md`
+- 想接入 AI / MCP：看 `examples/mcp/`
+- 想排查问题：看 `docs/FAQ.md` 和 `docs/TROUBLESHOOTING.md`
+
+## 适合谁
+
+- 普通用户：想把重复点击、输入、切换窗口自动化
+- 开发者：想把桌面能力整理成脚本、工具或本地服务
+- AI Agent 使用者：想让模型调用窗口、截图、聊天发送与 bridge 工作流
+
 ## 项目定位
 
 - 想录一段鼠标键盘操作并重复执行：直接用 GUI 或命令行
 - 想让 AI 远程驱动窗口、点击、输入、截图：启动 MCP Server
 - 想把 Trae 当成“被委托执行”的桌面 IDE：使用 `trae_status` / `trae_delegate`
+
+## 应用场景
+
+- 重复性桌面操作自动化，例如固定流程点击、输入、切换窗口和截图
+- 测试或演示辅助，例如录制一段标准操作并稳定重复回放
+- AI 驱动的桌面执行，例如让 MCP Host 代替人工完成窗口交互
+- 聊天软件或 IDE 辅助操作，例如向指定聊天窗口发送内容、执行桥接工作流
+- 本地代理协作，例如让 Lobster / Trae / OpenClaw 风格代理通过 bridge 继续处理任务
 
 ## 核心能力
 
@@ -66,6 +94,12 @@ C:\ClawMouse
 - `examples/mcp/`：MCP Host 与 Lobster / OpenClaw 风格示例配置
 - `Event/`、`Recorder/`、`Plugin/`：宏录制 / 执行 / 插件相关基础模块
 - `assets/`：界面资源与国际化资源
+
+## 项目结构图
+
+如果你想快速看懂这个仓库的能力分层，建议直接看：
+
+- `docs/PROJECT_MAP.md`
 
 ## 快速开始
 
@@ -110,6 +144,56 @@ python mcp_server.py
 python mcp_server.py --transport http --host 127.0.0.1 --port 8000
 ```
 
+### 4. 在桌面版 Trae 中接入 MCP
+
+如果你在 Windows 上按推荐目录使用当前仓库：
+
+```text
+C:\ClawMouse
+```
+
+并且 Python 环境是：
+
+```text
+C:\ProgramData\anaconda3\envs\keymousego310\python.exe
+```
+
+那么桌面版 Trae 的 `mcpServers` 配置可以直接写成：
+
+```json
+{
+  "mcpServers": {
+    "clawmouse": {
+      "command": "C:\\ProgramData\\anaconda3\\envs\\keymousego310\\python.exe",
+      "args": [
+        "C:\\ClawMouse\\mcp_server.py"
+      ],
+      "cwd": "C:\\ClawMouse",
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  }
+}
+```
+
+如果你使用桌面版 Trae 的“编辑 MCP 服务”表单，也可以按下面填写：
+
+- 服务名称：`clawmouse`
+- 描述：`clawmouse 桌面控制、截图与聊天消息发送`
+- 传输类型：`标准输入输出 (stdio)`
+- 命令：`C:\ProgramData\anaconda3\envs\keymousego310\python.exe`
+- 参数：`C:\ClawMouse\mcp_server.py`
+- 环境变量：`PYTHONIOENCODING=utf-8`
+- 如果表单里提供工作目录字段：填写 `C:\ClawMouse`
+
+如果 Trae 提示 JSON 格式错误，优先检查：
+
+- 是否使用了严格 JSON，而不是 JSON5
+- Windows 路径是否写成双反斜杠 `\\`
+- 最后一项后面是否多了逗号
+- 是否把完整对象错误地粘贴进了 `mcpServers` 内部
+
 ## MCP 工具分层
 
 ### 脚本与执行
@@ -153,6 +237,7 @@ python mcp_server.py --transport http --host 127.0.0.1 --port 8000
 - `send_message_with_profile`
 - `browser_chat_send_message`
 - `trae_send_message`
+- `trae_solo_send_message`
 - `wechat_send_message`
 - `qq_send_message`
 
@@ -263,6 +348,12 @@ ClawMouse-v0.1.0-win.exe
 - 桥接接口优先提供稳定的高层入口，而不是要求调用方直接拼底层动作
 - 示例配置放在 `examples/`，运行期产物放在忽略目录里
 
+## 借鉴与致谢
+
+- ClawMouse 在能力与代码组织上借鉴并延续了 `KeymouseGo` 的基础思路
+- 感谢原项目作者 `taojy123` 以及历史贡献者提供的开源基础、桌面宏能力和长期维护经验
+- 当前仓库是在原有桌面自动化能力之上，继续向 MCP、截图、窗口控制和 Trae bridge 工作流方向整理与扩展
+
 ## 贡献
 
 欢迎提交 Issue 和 Pull Request。
@@ -279,8 +370,11 @@ ClawMouse-v0.1.0-win.exe
 发布与分发可参考：
 
 - `RELEASE.md`
+- `docs/PROJECT_MAP.md`
 - `docs/WINDOWS_RELEASE.md`
 - `docs/REPOSITORY_SETUP.md`
+- `docs/FAQ.md`
+- `docs/TROUBLESHOOTING.md`
 
 ## 许可证
 

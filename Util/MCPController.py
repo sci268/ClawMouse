@@ -56,6 +56,21 @@ CHAT_APP_PROFILES = {
         'title_substring': 'Trae',
         'exact_title': None,
         'class_name': 'Chrome_WidgetWin_1',
+        'title_keywords': ['Trae', 'Trae Solo'],
+        'submit_mode': 'enter',
+        'input_ratio': {'x': 0.5, 'y': 0.94},
+        'send_ratio': None,
+        'focus': True,
+        'enter_delay_ms': 250,
+        'enter_times': 2,
+        'click_before_enter': True,
+        'click_before_enter_delay_ms': 120,
+    },
+    'trae_solo': {
+        'title_substring': 'Trae Solo',
+        'exact_title': None,
+        'class_name': 'Chrome_WidgetWin_1',
+        'title_keywords': ['Trae Solo', 'Trae'],
         'submit_mode': 'enter',
         'input_ratio': {'x': 0.5, 'y': 0.94},
         'send_ratio': None,
@@ -1962,23 +1977,32 @@ class KeymouseGoController:
         click_before_enter: Optional[bool] = None,
         click_before_enter_delay_ms: Optional[int] = None,
     ) -> Dict[str, Any]:
+        requested_profile_name = profile_name
         profile = self._get_chat_profile(profile_name)
         resolved_title_substring = title_substring if title_substring is not None else profile['title_substring']
         resolved_exact_title = exact_title if exact_title is not None else profile['exact_title']
         resolved_class_name = class_name if class_name is not None else profile['class_name']
-        resolved_focus = profile['focus'] if focus is None else focus
-        resolved_submit_mode = profile['submit_mode'] if submit_mode is None else submit_mode
-        resolved_enter_delay_ms = profile.get('enter_delay_ms', 0) if enter_delay_ms is None else enter_delay_ms
-        resolved_enter_times = profile.get('enter_times', 1) if enter_times is None else enter_times
-        resolved_click_before_enter = profile.get('click_before_enter', False) if click_before_enter is None else click_before_enter
-        resolved_click_before_enter_delay_ms = profile.get('click_before_enter_delay_ms', 120) if click_before_enter_delay_ms is None else click_before_enter_delay_ms
-        window = self._resolve_window_target(
+        window = self._resolve_chat_window(
+            requested_profile_name,
             hwnd,
             resolved_title_substring,
             resolved_exact_title,
             resolved_class_name,
             visible_only,
         )
+        effective_profile_name = requested_profile_name
+        if requested_profile_name == 'trae' and self._looks_like_trae_solo_window(window):
+            effective_profile_name = 'trae_solo'
+            profile = self._get_chat_profile(effective_profile_name)
+            resolved_title_substring = title_substring if title_substring is not None else profile['title_substring']
+            resolved_exact_title = exact_title if exact_title is not None else profile['exact_title']
+            resolved_class_name = class_name if class_name is not None else profile['class_name']
+        resolved_focus = profile['focus'] if focus is None else focus
+        resolved_submit_mode = profile['submit_mode'] if submit_mode is None else submit_mode
+        resolved_enter_delay_ms = profile.get('enter_delay_ms', 0) if enter_delay_ms is None else enter_delay_ms
+        resolved_enter_times = profile.get('enter_times', 1) if enter_times is None else enter_times
+        resolved_click_before_enter = profile.get('click_before_enter', False) if click_before_enter is None else click_before_enter
+        resolved_click_before_enter_delay_ms = profile.get('click_before_enter_delay_ms', 120) if click_before_enter_delay_ms is None else click_before_enter_delay_ms
         if input_offset_x is not None and input_offset_y is not None:
             computed_input_offset_x = int(input_offset_x)
             computed_input_offset_y = int(input_offset_y)
@@ -2022,7 +2046,8 @@ class KeymouseGoController:
             click_before_enter=resolved_click_before_enter,
             click_before_enter_delay_ms=resolved_click_before_enter_delay_ms,
         )
-        result['profile'] = profile_name
+        result['profile'] = effective_profile_name
+        result['requested_profile'] = requested_profile_name
         return result
 
     def browser_chat_send_message(
@@ -2089,6 +2114,48 @@ class KeymouseGoController:
         resolved_submit_mode = 'enter' if submit_mode is None else submit_mode
         return self.send_message_with_profile(
             'trae',
+            text,
+            hwnd=hwnd,
+            title_substring=title_substring,
+            exact_title=exact_title,
+            input_offset_x=input_offset_x,
+            input_offset_y=input_offset_y,
+            submit_mode=resolved_submit_mode,
+            visible_only=visible_only,
+            focus=focus,
+            restore=restore,
+            hold_ms=hold_ms,
+            input_ready_delay_ms=input_ready_delay_ms,
+            click_delay_ms=click_delay_ms,
+            enter_delay_ms=enter_delay_ms,
+            enter_times=enter_times,
+            click_before_enter=click_before_enter,
+            click_before_enter_delay_ms=click_before_enter_delay_ms,
+        )
+
+    def trae_solo_send_message(
+        self,
+        text: str,
+        hwnd: Optional[int] = None,
+        title_substring: Optional[str] = None,
+        exact_title: Optional[str] = None,
+        input_offset_x: Optional[int] = None,
+        input_offset_y: Optional[int] = None,
+        submit_mode: Optional[str] = None,
+        visible_only: bool = True,
+        focus: Optional[bool] = None,
+        restore: bool = True,
+        hold_ms: int = 50,
+        input_ready_delay_ms: int = 100,
+        click_delay_ms: int = 0,
+        enter_delay_ms: Optional[int] = None,
+        enter_times: Optional[int] = None,
+        click_before_enter: Optional[bool] = None,
+        click_before_enter_delay_ms: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        resolved_submit_mode = 'enter' if submit_mode is None else submit_mode
+        return self.send_message_with_profile(
+            'trae_solo',
             text,
             hwnd=hwnd,
             title_substring=title_substring,
@@ -2546,25 +2613,108 @@ class KeymouseGoController:
         }
 
     def _select_preferred_trae_window(self, windows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        return self._select_preferred_chat_window('trae', windows)
+
+    def _resolve_chat_window(
+        self,
+        profile_name: str,
+        hwnd: Optional[int],
+        title_substring: Optional[str],
+        exact_title: Optional[str],
+        class_name: Optional[str],
+        visible_only: bool,
+    ) -> Dict[str, Any]:
+        self._ensure_window_api()
+        if hwnd is not None:
+            return self._window_info(hwnd)
+        profile = self._get_chat_profile(profile_name)
+        if exact_title is not None:
+            return self._resolve_window_target(None, '', exact_title, class_name, visible_only)
+        search_terms: List[str] = []
+        if title_substring is not None:
+            search_terms.append(str(title_substring))
+        default_title = profile.get('title_substring')
+        profile_keywords = profile.get('title_keywords')
+        if title_substring == default_title and isinstance(profile_keywords, list):
+            for keyword in profile_keywords:
+                normalized_keyword = str(keyword or '').strip()
+                if normalized_keyword and normalized_keyword not in search_terms:
+                    search_terms.append(normalized_keyword)
+        if len(search_terms) == 0:
+            search_terms.append('')
+        candidates_by_hwnd: Dict[int, Dict[str, Any]] = {}
+        for term in search_terms:
+            windows = self._enumerate_windows(
+                title_filter=term,
+                exact_title=None,
+                class_name=class_name,
+                visible_only=visible_only,
+                limit=20,
+            )
+            for window in windows:
+                candidates_by_hwnd[int(window['hwnd'])] = window
+        candidates = list(candidates_by_hwnd.values())
+        if len(candidates) == 0:
+            raise ValueError('No window matched the given condition')
+        selected = self._select_preferred_chat_window(profile_name, candidates)
+        if selected is None:
+            raise ValueError('No window matched the given condition')
+        return selected
+
+    def _select_preferred_chat_window(
+        self,
+        profile_name: str,
+        windows: List[Dict[str, Any]],
+    ) -> Optional[Dict[str, Any]]:
         if not windows:
             return None
         scored: List[Tuple[int, Dict[str, Any]]] = []
         for window in windows:
             title = str(window.get('title') or '')
+            title_lower = title.lower()
+            class_name = str(window.get('class_name') or '').lower()
+            rect = window.get('rect', {}) if isinstance(window.get('rect', {}), dict) else {}
+            width = max(0, int(rect.get('width', 0)))
+            height = max(0, int(rect.get('height', 0)))
             score = 0
-            if title.endswith(' - Trae'):
-                score += 10
-            if title == 'Trae':
-                score += 8
-            if ' - Trae' in title:
-                score += 5
-            if 'Microsoft' in title or 'Edge' in title or 'Chrome' in title:
-                score -= 4
             if window.get('foreground'):
-                score += 2
+                score += 40
+            if width > 0 and height > 0:
+                score += min(10, int((width * height) / 250000))
+            if class_name == 'chrome_widgetwin_1':
+                score += 3
+            if profile_name == 'trae':
+                if title == 'Trae':
+                    score += 20
+                if title.endswith(' - Trae'):
+                    score += 16
+                if ' - trae' in title_lower:
+                    score += 10
+                if 'trae solo' in title_lower:
+                    score += 18
+                elif 'trae' in title_lower:
+                    score += 12
+                if any(name in title_lower for name in ['chrome', 'edge', 'browser', '网页']):
+                    score += 6
+            elif profile_name == 'trae_solo':
+                if 'trae solo' in title_lower:
+                    score += 60
+                elif 'trae' in title_lower:
+                    score += 10
+                if any(name in title_lower for name in ['chrome', 'edge', 'browser', '网页']):
+                    score += 18
+            elif profile_name == 'browser_chat':
+                if any(name in title_lower for name in ['chrome', 'edge', 'browser', '网页']):
+                    score += 10
             scored.append((score, window))
         scored.sort(key=lambda item: item[0], reverse=True)
         return scored[0][1]
+
+    def _looks_like_trae_solo_window(self, window: Dict[str, Any]) -> bool:
+        title = str(window.get('title') or '').lower()
+        if 'trae solo' in title:
+            return True
+        return 'trae' in title and any(name in title for name in ['chrome', 'edge', 'browser', '网页'])
 
     def _ratio_to_offset(self, window: Dict[str, Any], ratio: float, axis: str) -> int:
         rect = window['rect']
