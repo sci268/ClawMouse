@@ -1,0 +1,19 @@
+{
+  skills: {
+    entries: [
+      {
+        name: "clawmouse",
+        enabled: true,
+        transport: "stdio",
+        command: "C:\\path\\to\\python.exe",
+        args: [
+          "C:\\path\\to\\ClawMouse\\mcp_server.py"
+        ],
+        cwd: "C:\\path\\to\\ClawMouse",
+        env: {
+          PYTHONIOENCODING: "utf-8"
+        }
+      }
+    ]
+  }
+}

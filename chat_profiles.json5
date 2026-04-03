@@ -1,0 +1,21 @@
+{
+  "profiles": {
+    "trae": {
+      "submit_mode": "enter",
+      "enter_delay_ms": 600,
+      "enter_times": 3,
+      "click_before_enter": true,
+      "click_before_enter_delay_ms": 120,
+      "title_substring": "Trae",
+      "class_name": "Chrome_WidgetWin_1",
+      "input_ratio": {
+        "x": 0.890625,
+        "y": 0.872093023255814,
+      },
+      "send_ratio": {
+        "x": 0.9583333333333334,
+        "y": 0.9428294573643411,
+      },
+    },
+  },
+}
