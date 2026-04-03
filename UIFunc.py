@@ -373,12 +373,12 @@ class UIFunc(QMainWindow, Ui_UIView, QtStyleTools):
     def pauseRecordMethod(self):
         if self.state == State.PAUSE_RECORDING:
             logger.info('Record resume')
-            self.btpauserecord.setText(QCoreApplication.translate("UIView", 'Pause', None))
+            self.btpauserecord.setText(QCoreApplication.translate("UIView", 'Pause Recording', None))
             self.update_state(State.RECORDING)
         elif self.state == State.RECORDING:
             logger.info('Record pause')
             self.btpauserecord.setText(QCoreApplication.translate("UIView", 'Continue', None))
-            self.tnumrd.setText('record paused')
+            self.tnumrd.setText('Recording paused')
             self.update_state(State.PAUSE_RECORDING)
 
     def OnPauseRecordButton(self):
@@ -415,7 +415,7 @@ class UIFunc(QMainWindow, Ui_UIView, QtStyleTools):
             with open(self.new_script_path(), 'w', encoding='utf-8') as f:
                 json5.dump({"scripts": self.record}, indent=2, ensure_ascii=False, fp=f)
             self.btrecord.setText(QCoreApplication.translate("UIView", 'Record', None))
-            self.tnumrd.setText('finished')
+            self.tnumrd.setText('Recording finished')
             self.record = []
             self.actioncount = 0
             self.choice_script.setCurrentIndex(0)
@@ -482,4 +482,4 @@ class UIFunc(QMainWindow, Ui_UIView, QtStyleTools):
 
     @Slot(tuple)
     def cursor_pos_change(self, pos):
-        self.label_cursor_pos.setText(f'Cursor pos: {pos}')
+        self.label_cursor_pos.setText(f'Cursor: {pos}')

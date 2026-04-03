@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   clawmouse_version_suffix: _v0_1_0
@@ -37,13 +37,12 @@ jobs:
         with:
           name: windows
           path: ${{ github.workspace }}/artifact/
-#      - name: Create Release
-#        uses: softprops/action-gh-release@v2
-#        with:
-#          draft: true
-#          name: KeymouseGo${{ env.keymousego-version }}
-#          tag_name: ${{ env.tag_name }}
-#          files: ./artifact/KeymouseGo${{ env.keymousego-version }}-win.exe
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ClawMouse ${{ env.tag_name }}
+          tag_name: ${{ env.tag_name }}
+          files: ./artifact/ClawMouse${{ env.clawmouse_version_suffix }}-win.exe
 
   build-linux:
     runs-on: ubuntu-latest
