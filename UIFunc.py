@@ -1,5 +1,6 @@
 # -*- encoding:utf-8 -*-
 import datetime
+import json
 from typing import List
 
 import json5
@@ -90,6 +91,14 @@ class UIFunc(QMainWindow, Ui_UIView, QtStyleTools):
         self.config = self.loadconfig()
 
         self.setFocusPolicy(Qt.NoFocus)
+        self.mcp_host = '127.0.0.1'
+        self.mcp_port = int(self.config.value("Config/MCPPort", 8765))
+        self.mcp_process = QProcess(self)
+        self.mcp_process.setProcessChannelMode(QProcess.MergedChannels)
+        self.mcp_process.started.connect(self.handle_mcp_process_started)
+        self.mcp_process.readyReadStandardOutput.connect(self.handle_mcp_process_output)
+        self.mcp_process.errorOccurred.connect(self.handle_mcp_process_error)
+        self.mcp_process.finished.connect(self.handle_mcp_process_finished)
 
         self.trans = QTranslator(self)
         self.choice_language.addItems(['简体中文', 'English', '繁體中文'])
@@ -150,6 +159,8 @@ class UIFunc(QMainWindow, Ui_UIView, QtStyleTools):
         self.btrecord.clicked.connect(self.OnBtrecordButton)
         self.btpauserecord.clicked.connect(self.OnPauseRecordButton)
         self.bt_open_script_files.clicked.connect(self.OnBtOpenScriptFilesButton)
+        self.bt_mcp_help.clicked.connect(self.show_mcp_help)
+        self.bt_mcp_toggle.clicked.connect(self.toggle_mcp_process)
         self.choice_language.installEventFilter(self)
         self.choice_script.installEventFilter(self)
         self.btrun.installEventFilter(self)
@@ -272,6 +283,8 @@ class UIFunc(QMainWindow, Ui_UIView, QtStyleTools):
         Recorder.set_callback(on_record_event)
         Recorder.set_cursor_pose_change(self.cursor_pos_change)
         Recorder.set_interval(self.mouse_move_interval_ms.value())
+        self.update_mcp_controls(False, 'Stopped')
+        QTimer.singleShot(200, self.ensure_mcp_started)
 
     def eventFilter(self, watched, event: QEvent):
         et: QEvent.Type = event.type()
@@ -311,6 +324,8 @@ class UIFunc(QMainWindow, Ui_UIView, QtStyleTools):
         self.hotkey_stop.setText(self.config.value("Config/StopHotKey"))
         self.hotkey_start.setText(self.config.value("Config/StartHotKey"))
         self.hotkey_record.setText(self.config.value("Config/RecordHotKey"))
+        if hasattr(self, 'mcp_process'):
+            self.update_mcp_controls(self.mcp_process.state() != QProcess.NotRunning, self.label_mcp_status_value.text())
 
     def onchangetheme(self):
         theme = self.choice_theme.currentText()
@@ -327,6 +342,7 @@ class UIFunc(QMainWindow, Ui_UIView, QtStyleTools):
 
     def closeEvent(self, event):
         self.config.sync()
+        self.stop_mcp_process(wait_ms=1200)
         Recorder.dispose()
         if self.state == State.PAUSE_RUNNING:
             self.update_state(State.RUNNING)
@@ -345,6 +361,7 @@ class UIFunc(QMainWindow, Ui_UIView, QtStyleTools):
                         'RecordHotKey=f10\n'
                         'LoopTimes=1\n'
                         'Precision=200\n'
+                        'MCPPort=8765\n'
                         'Language=zh-cn\n'
                         'Theme=Default\n')
         return QSettings(to_abs_path('config.ini'), QSettings.IniFormat)
@@ -483,3 +500,129 @@ class UIFunc(QMainWindow, Ui_UIView, QtStyleTools):
     @Slot(tuple)
     def cursor_pos_change(self, pos):
         self.label_cursor_pos.setText(f'Cursor: {pos}')
+
+    def _get_stdio_mcp_config(self):
+        if getattr(sys, 'frozen', False):
+            command = os.path.normpath(sys.executable)
+            args = ['--mcp-server']
+            cwd = os.path.dirname(command)
+        else:
+            command = os.path.normpath(sys.executable)
+            args = [os.path.normpath(to_abs_path('ClawMouse.py')), '--mcp-server']
+            cwd = os.path.normpath(to_abs_path())
+        return {
+            'command': command,
+            'args': args,
+            'cwd': cwd,
+            'env': {
+                'PYTHONIOENCODING': 'utf-8',
+            },
+        }
+
+    def _get_http_mcp_launch(self):
+        config = self._get_stdio_mcp_config()
+        launch_args = list(config['args'])
+        launch_args.extend(['--transport', 'http', '--host', self.mcp_host, '--port', str(self.mcp_port)])
+        return config['command'], launch_args, config['cwd']
+
+    def _build_mcp_help_text(self):
+        config = self._get_stdio_mcp_config()
+        json_text = json.dumps({
+            'mcpServers': {
+                'clawmouse': config,
+            }
+        }, ensure_ascii=False, indent=2)
+        args_text = '\n'.join(config['args'])
+        help_text = (
+            'ClawMouse MCP 配置说明\n\n'
+            '当前界面启动后会默认拉起一个本地 HTTP MCP 服务，方便本机调试：\n'
+            f'http://{self.mcp_host}:{self.mcp_port}\n\n'
+            '如果你要在桌面版 Trae 里接入 MCP，推荐使用标准输入输出 (stdio) 方式。\n'
+            '请按你当前环境使用下面这份严格 JSON：\n\n'
+            f'{json_text}\n\n'
+            '如果你使用 Trae 的“编辑 MCP 服务”表单：\n'
+            f'服务名称：clawmouse\n'
+            f'传输类型：标准输入输出 (stdio)\n'
+            f'命令：{config["command"]}\n'
+            f'参数：\n{args_text}\n'
+            f'工作目录：{config["cwd"]}\n'
+            '环境变量：PYTHONIOENCODING=utf-8\n\n'
+            '如果 Trae 提示 JSON 格式错误，请检查双反斜杠、尾逗号和粘贴位置。'
+        )
+        return help_text
+
+    def show_mcp_help(self):
+        QMessageBox.information(self, 'ClawMouse MCP Help', self._build_mcp_help_text())
+
+    def update_mcp_controls(self, running: bool, status_text: str):
+        self.label_mcp_status_value.setText(status_text)
+        self.label_mcp_endpoint.setText(f'HTTP {self.mcp_host}:{self.mcp_port}')
+        if running:
+            self.label_mcp_status_value.setStyleSheet('color: #16a34a; font-weight: 700;')
+            self.bt_mcp_toggle.setText('Stop MCP')
+        else:
+            self.label_mcp_status_value.setStyleSheet('color: #dc2626; font-weight: 700;')
+            self.bt_mcp_toggle.setText('Start MCP')
+        self.statusbar.showMessage(f'MCP: {status_text}', 5000)
+
+    def ensure_mcp_started(self):
+        if self.mcp_process.state() != QProcess.NotRunning:
+            self.update_mcp_controls(True, 'Running')
+            return
+        self.start_mcp_process()
+
+    def start_mcp_process(self):
+        if self.mcp_process.state() != QProcess.NotRunning:
+            self.update_mcp_controls(True, 'Running')
+            return
+        command, args, cwd = self._get_http_mcp_launch()
+        environment = QProcessEnvironment.systemEnvironment()
+        environment.insert('PYTHONIOENCODING', 'utf-8')
+        self.mcp_process.setProcessEnvironment(environment)
+        self.mcp_process.setProgram(command)
+        self.mcp_process.setArguments(args)
+        self.mcp_process.setWorkingDirectory(cwd)
+        self.update_mcp_controls(False, 'Starting...')
+        logger.info(f'Starting MCP process: {command} {args}')
+        self.mcp_process.start()
+
+    def stop_mcp_process(self, wait_ms: int = 800):
+        if self.mcp_process.state() == QProcess.NotRunning:
+            self.update_mcp_controls(False, 'Stopped')
+            return
+        self.mcp_process.terminate()
+        if not self.mcp_process.waitForFinished(wait_ms):
+            self.mcp_process.kill()
+            self.mcp_process.waitForFinished(wait_ms)
+        self.update_mcp_controls(False, 'Stopped')
+
+    def toggle_mcp_process(self):
+        if self.mcp_process.state() == QProcess.NotRunning:
+            self.start_mcp_process()
+        else:
+            self.stop_mcp_process()
+
+    @Slot()
+    def handle_mcp_process_started(self):
+        self.update_mcp_controls(True, 'Running')
+        self.textlog.append(f'[MCP] Running on http://{self.mcp_host}:{self.mcp_port}')
+
+    @Slot()
+    def handle_mcp_process_output(self):
+        content = bytes(self.mcp_process.readAllStandardOutput()).decode('utf-8', errors='ignore').strip()
+        if not content:
+            return
+        for line in content.splitlines():
+            self.textlog.append(f'[MCP] {line}')
+
+    @Slot(QProcess.ProcessError)
+    def handle_mcp_process_error(self, error):
+        error_name = getattr(error, 'name', str(int(error)))
+        self.update_mcp_controls(False, f'Error: {error_name}')
+        self.textlog.append(f'[MCP] Process error: {error_name}')
+
+    @Slot(int, QProcess.ExitStatus)
+    def handle_mcp_process_finished(self, exit_code, exit_status):
+        status_name = getattr(exit_status, 'name', str(int(exit_status)))
+        self.update_mcp_controls(False, f'Stopped ({exit_code})')
+        self.textlog.append(f'[MCP] Process finished: exit_code={exit_code}, exit_status={status_name}')

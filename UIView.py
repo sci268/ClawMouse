@@ -26,7 +26,7 @@ class Ui_UIView(object):
     def setupUi(self, UIView):
         if not UIView.objectName():
             UIView.setObjectName(u"UIView")
-        UIView.resize(920, 640)
+        UIView.resize(920, 720)
         icon = QIcon()
         icon.addFile(u":/pic/Mondrian.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         UIView.setWindowIcon(icon)
@@ -112,7 +112,7 @@ class Ui_UIView(object):
 
         self.horizontalLayoutWidget = QWidget(self.centralwidget)
         self.horizontalLayoutWidget.setObjectName(u"horizontalLayoutWidget")
-        self.horizontalLayoutWidget.setGeometry(QRect(12, 340, 624, 52))
+        self.horizontalLayoutWidget.setGeometry(QRect(12, 340, 520, 52))
         self.horizontalLayout = QHBoxLayout(self.horizontalLayoutWidget)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setSizeConstraint(QLayout.SetDefaultConstraint)
@@ -141,7 +141,7 @@ class Ui_UIView(object):
 
         self.verticalLayoutWidget = QWidget(self.centralwidget)
         self.verticalLayoutWidget.setObjectName(u"verticalLayoutWidget")
-        self.verticalLayoutWidget.setGeometry(QRect(12, 404, 896, 210))
+        self.verticalLayoutWidget.setGeometry(QRect(12, 470, 896, 214))
         self.verticalLayout = QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -173,7 +173,7 @@ class Ui_UIView(object):
 
         self.formLayoutWidget_3 = QWidget(self.centralwidget)
         self.formLayoutWidget_3.setObjectName(u"formLayoutWidget_3")
-        self.formLayoutWidget_3.setGeometry(QRect(650, 348, 258, 36))
+        self.formLayoutWidget_3.setGeometry(QRect(12, 688, 300, 24))
         self.formLayout_3 = QFormLayout(self.formLayoutWidget_3)
         self.formLayout_3.setObjectName(u"formLayout_3")
         self.formLayout_3.setContentsMargins(0, 0, 0, 0)
@@ -187,6 +187,29 @@ class Ui_UIView(object):
         self.volumeSlider.setOrientation(Qt.Horizontal)
 
         self.formLayout_3.setWidget(0, QFormLayout.FieldRole, self.volumeSlider)
+
+        self.groupBox_mcp = QGroupBox(self.centralwidget)
+        self.groupBox_mcp.setObjectName(u"groupBox_mcp")
+        self.groupBox_mcp.setGeometry(QRect(548, 338, 360, 116))
+        self.groupBox_mcp.setStyleSheet(u"QGroupBox { font-weight: 600; border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 14px; margin-top: 12px; padding-top: 12px; } QGroupBox::title { subcontrol-origin: margin; left: 14px; padding: 0 6px; }")
+        self.gridLayout_mcp = QGridLayout(self.groupBox_mcp)
+        self.gridLayout_mcp.setObjectName(u"gridLayout_mcp")
+        self.gridLayout_mcp.setContentsMargins(14, 18, 14, 14)
+        self.label_mcp_status_title = QLabel(self.groupBox_mcp)
+        self.label_mcp_status_title.setObjectName(u"label_mcp_status_title")
+        self.gridLayout_mcp.addWidget(self.label_mcp_status_title, 0, 0, 1, 1)
+        self.label_mcp_status_value = QLabel(self.groupBox_mcp)
+        self.label_mcp_status_value.setObjectName(u"label_mcp_status_value")
+        self.gridLayout_mcp.addWidget(self.label_mcp_status_value, 0, 1, 1, 2)
+        self.label_mcp_endpoint = QLabel(self.groupBox_mcp)
+        self.label_mcp_endpoint.setObjectName(u"label_mcp_endpoint")
+        self.gridLayout_mcp.addWidget(self.label_mcp_endpoint, 1, 0, 1, 3)
+        self.bt_mcp_help = QPushButton(self.groupBox_mcp)
+        self.bt_mcp_help.setObjectName(u"bt_mcp_help")
+        self.gridLayout_mcp.addWidget(self.bt_mcp_help, 2, 1, 1, 1)
+        self.bt_mcp_toggle = QPushButton(self.groupBox_mcp)
+        self.bt_mcp_toggle.setObjectName(u"bt_mcp_toggle")
+        self.gridLayout_mcp.addWidget(self.bt_mcp_toggle, 2, 2, 1, 1)
 
         self.groupBox_2 = QGroupBox(self.centralwidget)
         self.groupBox_2.setObjectName(u"groupBox_2")
@@ -271,7 +294,7 @@ class Ui_UIView(object):
         self.statusbar = QStatusBar(UIView)
         self.statusbar.setObjectName(u"statusbar")
         UIView.setStatusBar(self.statusbar)
-        self.centralwidget.setStyleSheet(u"QPushButton { min-height: 36px; border-radius: 10px; padding: 6px 14px; font-weight: 600; } QPushButton#btrecord { background-color: #16a34a; color: white; } QPushButton#btrun { background-color: #0ea5e9; color: white; } QPushButton#btpauserecord { background-color: #f59e0b; color: white; } QTextEdit { border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 12px; padding: 8px; } QComboBox, QSpinBox { min-height: 32px; border-radius: 8px; padding-left: 8px; } QLabel#tnumrd { font-weight: 600; }")
+        self.centralwidget.setStyleSheet(u"QPushButton { min-height: 36px; border-radius: 10px; padding: 6px 14px; font-weight: 600; } QPushButton#btrecord { background-color: #16a34a; color: white; } QPushButton#btrun { background-color: #0ea5e9; color: white; } QPushButton#btpauserecord { background-color: #f59e0b; color: white; } QPushButton#bt_mcp_toggle { background-color: #7c3aed; color: white; } QPushButton#bt_mcp_help { background-color: #334155; color: white; } QTextEdit { border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 12px; padding: 8px; } QComboBox, QSpinBox { min-height: 32px; border-radius: 8px; padding-left: 8px; } QLabel#tnumrd { font-weight: 600; } QLabel#label_mcp_status_value { font-weight: 700; color: #16a34a; } QLabel#label_mcp_endpoint { color: #475569; }")
 
         self.retranslateUi(UIView)
 
@@ -279,7 +302,7 @@ class Ui_UIView(object):
     # setupUi
 
     def retranslateUi(self, UIView):
-        UIView.setWindowTitle(QCoreApplication.translate("UIView", u"ClawMouse Desktop Automation Studio", None))
+        UIView.setWindowTitle(QCoreApplication.translate("UIView", u"ClawMouse", None))
         self.label_brand_title.setText(QCoreApplication.translate("UIView", u"ClawMouse", None))
         self.label_brand_subtitle.setText(QCoreApplication.translate("UIView", u"Desktop automation, MCP control, window messaging and bridge workflows", None))
         self.label_brand_flow.setText(QCoreApplication.translate("UIView", u"WeChat -> Lobster -> ClawMouse MCP -> Trae -> Screenshot / result -> WeChat", None))
@@ -297,6 +320,12 @@ class Ui_UIView(object):
         self.tnumrd.setText(QCoreApplication.translate("UIView", u"ClawMouse ready. Choose a script or start recording.", None))
         self.label_cursor_pos.setText(QCoreApplication.translate("UIView", u"Cursor:", None))
         self.label_volume.setText(QCoreApplication.translate("UIView", u"Volume", None))
+        self.groupBox_mcp.setTitle(QCoreApplication.translate("UIView", u"MCP Service", None))
+        self.label_mcp_status_title.setText(QCoreApplication.translate("UIView", u"Status", None))
+        self.label_mcp_status_value.setText(QCoreApplication.translate("UIView", u"Starting...", None))
+        self.label_mcp_endpoint.setText(QCoreApplication.translate("UIView", u"HTTP 127.0.0.1:8765", None))
+        self.bt_mcp_help.setText(QCoreApplication.translate("UIView", u"Help", None))
+        self.bt_mcp_toggle.setText(QCoreApplication.translate("UIView", u"Stop MCP", None))
         self.groupBox_2.setTitle(QCoreApplication.translate("UIView", u"Run Profile", None))
         self.label_execute_interval.setText(QCoreApplication.translate("UIView", u"Move Precision", None))
         self.label_theme.setText(QCoreApplication.translate("UIView", u"Theme", None))

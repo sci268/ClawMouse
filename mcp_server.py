@@ -1152,12 +1152,12 @@ def qq_send_message(
     )
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument('--transport', default='stdio', choices=['stdio', 'http'])
     parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=8000)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.transport == 'http':
         mcp.run(transport='http', host=args.host, port=args.port)
         return
