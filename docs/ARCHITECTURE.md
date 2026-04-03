@@ -104,7 +104,57 @@ ClawMouse 当前可以理解成三层能力叠加：
 - 再通过 `trae_delegate(mode='window_message')` 发送到 Trae
 - 再尝试从可见聊天区域抽取回复
 
-## 6. 当前已知边界
+## 6. 功能流程图
+
+### 总体能力流
+
+```mermaid
+flowchart TD
+    A[用户 / Lobster / Trae Host] --> B[mcp_server.py]
+    B --> C[KeymouseGoController]
+    C --> D[脚本执行]
+    C --> E[窗口控制]
+    C --> F[聊天发送]
+    C --> G[截图与视觉辅助]
+    C --> H[bridge 任务队列]
+    D --> I[Recorder / Event / Plugin]
+    E --> J[find_window focus_window click_in_window]
+    F --> K[send_message_with_profile]
+    G --> L[capture_window capture_profile_window]
+    H --> M[trae_delegate / trae_status]
+```
+
+### Lobster 无扰动发送到 Trae 对话框
+
+这个链路的目标不是“盲点屏幕坐标”，而是尽量基于窗口识别、画像坐标和输入策略，把消息稳定送到 Trae 对话框。
+
+```mermaid
+flowchart TD
+    A[Lobster / MCP Host] --> B[trae_send_message 或 trae_solo_send_message]
+    B --> C[send_message_with_profile]
+    C --> D[读取 trae 或 trae_solo profile]
+    D --> E[查找候选窗口]
+    E --> F[选择最合适的 Trae 窗口]
+    F --> G[根据 ratio 或 offset 计算输入框坐标]
+    G --> H[聚焦目标窗口]
+    H --> I[在窗口客户区点击输入框]
+    I --> J[text_input 写入消息]
+    J --> K[按 profile 执行发送策略]
+    K --> L[click_before_enter]
+    K --> M[enter_times / enter_delay_ms]
+    L --> N[消息提交到 Trae 对话框]
+    M --> N
+```
+
+### 为什么这条链路更稳
+
+- 先找窗口，再算窗口内偏移，而不是直接用固定屏幕坐标
+- `trae` 和 `trae_solo` 分别维护 profile，避免桌面版和网页版混用同一套发送参数
+- 发送前先聚焦目标窗口，再在窗口客户区点击输入框，减少误发到别的窗口
+- 发送动作支持 `click_before_enter`、`enter_times`、`enter_delay_ms`，能适配富文本输入框和网页聊天框
+- 当同时存在桌面版 Trae 和网页版 Trae Solo 时，会优先选择更符合当前 profile 的窗口
+
+## 7. 当前已知边界
 
 ### 已相对稳定
 
@@ -120,7 +170,7 @@ ClawMouse 当前可以理解成三层能力叠加：
 - processing / tmp 残留文件自愈
 - 更强的桥接恢复能力
 
-## 7. 建议的二次开发方向
+## 8. 建议的二次开发方向
 
 如果要在这个仓库上继续扩展，建议优先沿以下方向推进：
 
