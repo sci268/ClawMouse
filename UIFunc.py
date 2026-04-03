@@ -11,7 +11,7 @@ import platform
 import locale
 import Recorder
 
-from PySide6.QtGui import QTextCursor
+from PySide6.QtGui import QTextCursor, QPixmap
 from qt_material import list_themes, QtStyleTools
 from PySide6.QtCore import *
 from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox
@@ -83,6 +83,8 @@ class UIFunc(QMainWindow, Ui_UIView, QtStyleTools):
         logger.info('assets root:{0}'.format(get_assets_path()))
 
         self.setupUi(self)
+        self._apply_brand_icon()
+        self._apply_responsive_layout()
 
         self.app = app
 
@@ -352,6 +354,10 @@ class UIFunc(QMainWindow, Ui_UIView, QtStyleTools):
             self.runthread.resume()
         event.accept()
 
+    def resizeEvent(self, event):
+        self._apply_responsive_layout()
+        return super(UIFunc, self).resizeEvent(event)
+
     def loadconfig(self):
         if not os.path.exists(to_abs_path('config.ini')):
             with open(to_abs_path('config.ini'), 'w', encoding='utf-8') as f:
@@ -500,6 +506,42 @@ class UIFunc(QMainWindow, Ui_UIView, QtStyleTools):
     @Slot(tuple)
     def cursor_pos_change(self, pos):
         self.label_cursor_pos.setText(f'Cursor: {pos}')
+
+    def _apply_brand_icon(self):
+        pixmap = QPixmap(':/pic/Mondrian.png')
+        if pixmap.isNull():
+            return
+        scaled = pixmap.scaled(84, 84, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.label_brand_icon.setPixmap(scaled)
+
+    def _apply_responsive_layout(self):
+        margin = 12
+        gap = 18
+        width = max(self.width(), 920)
+        height = max(self.height(), 720)
+        content_width = width - margin * 2
+        top_width = max(896, content_width)
+        self.brandPanel.setGeometry(QRect(margin, margin, top_width, 118))
+        self.label_brand_flow.setGeometry(QRect(20, 84, max(500, top_width - 170), 22))
+        self.label_brand_icon.setGeometry(QRect(top_width - 112, 16, 92, 86))
+
+        lower_width = content_width
+        left_width = max(500, int((lower_width - gap) * 0.56))
+        right_width = max(360, lower_width - gap - left_width)
+        if left_width + right_width + gap > lower_width:
+            left_width = lower_width - gap - right_width
+        left_x = margin
+        right_x = left_x + left_width + gap
+
+        self.groupBox_2.setGeometry(QRect(left_x, 146, left_width, 182))
+        self.groupBox.setGeometry(QRect(right_x, 146, right_width, 182))
+        self.horizontalLayoutWidget.setGeometry(QRect(left_x, 340, left_width, 52))
+        self.groupBox_mcp.setGeometry(QRect(right_x, 340, right_width, 116))
+
+        bottom_top = 470
+        bottom_height = max(170, height - bottom_top - 54)
+        self.verticalLayoutWidget.setGeometry(QRect(margin, bottom_top, lower_width, bottom_height))
+        self.formLayoutWidget_3.setGeometry(QRect(margin, height - 34, min(360, lower_width), 24))
 
     def _get_stdio_mcp_config(self):
         if getattr(sys, 'frozen', False):
